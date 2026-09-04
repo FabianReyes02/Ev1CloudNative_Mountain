@@ -1,4 +1,4 @@
-import { Mountain, Mail, MapPin, Phone } from 'lucide-react';
+import { Mountain, Mail, MapPin, Phone } from "lucide-react";
 
 export const FooterAlpine = () => {
   return (
@@ -13,19 +13,28 @@ export const FooterAlpine = () => {
               </span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-6">
-              Equipamiento técnico para los extremos. Cada producto supera 10,000
-              horas de testing en campo antes de llegar a tus manos.
+              Equipamiento técnico para los extremos. Cada producto supera
+              10,000 horas de testing en campo antes de llegar a tus manos.
             </p>
-            <div className="flex gap-3">
-              {['X', 'IG', 'YT', 'FB'].map((social) => (
-                <a
-                  key={social}
-                  href="#"
-                  className="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg flex items-center justify-center text-xs font-bold transition-all"
-                >
-                  {social}
-                </a>
-              ))}
+            <div className="flex gap-5">
+              <a
+                href="#"
+                className="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg flex items-center justify-center text-xs font-bold transition-all"
+              >
+                <span>X</span>
+              </a>
+              <a
+                href="#"
+                className="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg flex items-center justify-center text-xs font-bold transition-all"
+              >
+                <span>YT</span>
+              </a>
+              <a
+                href="#"
+                className="w-9 h-9 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg flex items-center justify-center text-xs font-bold transition-all"
+              >
+                <span>IG</span>
+              </a>
             </div>
           </div>
 
@@ -35,12 +44,12 @@ export const FooterAlpine = () => {
             </h4>
             <ul className="space-y-3">
               {[
-                'Hardshells',
-                'Aislantes',
-                'Softshells',
-                'Capas Base',
-                'Calzado Técnico',
-                'Accesorios',
+                "Hardshells",
+                "Aislantes",
+                "Softshells",
+                "Capas Base",
+                "Calzado Técnico",
+                "Accesorios",
               ].map((item) => (
                 <li key={item}>
                   <a
@@ -60,12 +69,12 @@ export const FooterAlpine = () => {
             </h4>
             <ul className="space-y-3">
               {[
-                'Guía de Tallas',
-                'Guía de Capas',
-                'Cuidado del Equipamiento',
-                'Garantía Vitalicia',
-                'Reparaciones',
-                'Envíos y Devoluciones',
+                "Guía de Tallas",
+                "Guía de Capas",
+                "Cuidado del Equipamiento",
+                "Garantía Vitalicia",
+                "Reparaciones",
+                "Envíos y Devoluciones",
               ].map((item) => (
                 <li key={item}>
                   <a
@@ -87,36 +96,22 @@ export const FooterAlpine = () => {
               <li className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-glacier-400 mt-0.5 shrink-0" />
                 <span className="text-slate-400 text-sm">
-                  Av. Montaña 4750, Barrio Alpino
+                  Calle Epstein 290, Población Miraluna
                   <br />
-                  Mendoza, Argentina
+                  Alerce city, Chile
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-glacier-400 shrink-0" />
-                <span className="text-slate-400 text-sm">+54 261 456-7890</span>
+                <span className="text-slate-400 text-sm">+56 9 - - - - -</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-glacier-400 shrink-0" />
-                <span className="text-slate-400 text-sm">gear@summitlab.com</span>
+                <span className="text-slate-400 text-sm">
+                  equipobomba@summitlab.com
+                </span>
               </li>
             </ul>
-
-            <div className="mt-6 p-4 bg-slate-900 rounded-lg border border-slate-800">
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">
-                Newsletter Técnico
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="tu@email.com"
-                  className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-glacier-500 transition-colors"
-                />
-                <button className="bg-glacier-500 hover:bg-glacier-400 text-slate-950 font-bold px-3 py-2 rounded-lg text-sm transition-colors">
-                  Unirme
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 

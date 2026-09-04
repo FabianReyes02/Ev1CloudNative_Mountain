@@ -1,14 +1,13 @@
-import { useState } from 'react';
-import { Mountain, Menu, X, ShoppingCart, Search, User } from 'lucide-react';
+import { useState } from "react";
+import { Mountain, Menu, X, ShoppingCart, Search, User } from "lucide-react";
 
 export const NavbarTech = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = [
-    { label: 'Catálogo', href: '#catalog' },
-    { label: 'Tecnología', href: '#tech' },
-    { label: 'Actividades', href: '#activities' },
-    { label: 'Guía de Capas', href: '#layers' },
+    { label: "Catálogo", href: "#catalog" },
+    { label: "Tecnología", href: "#tech" },
+    { label: "Actividades", href: "#activities" },
   ];
 
   return (
@@ -25,7 +24,7 @@ export const NavbarTech = () => {
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-15">
             {navLinks.map((link) => (
               <a
                 key={link.label}
@@ -47,12 +46,6 @@ export const NavbarTech = () => {
             </button>
             <button className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all">
               <ShoppingCart className="w-5 h-5" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-thermal-500 text-slate-950 text-[10px] font-bold rounded-full flex items-center justify-center">
-                3
-              </span>
-            </button>
-            <button className="btn-primary !py-2 !px-4 text-sm">
-              Equiparse
             </button>
           </div>
 

@@ -1,4 +1,4 @@
-import { ChevronDown, Shield, Thermometer, Droplets } from 'lucide-react';
+import { ChevronDown, Shield, Thermometer, Droplets } from "lucide-react";
 
 export const HeroMountain = () => {
   return (
@@ -23,7 +23,7 @@ export const HeroMountain = () => {
           </div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-[0.95] tracking-tight mb-6">
-            Conquistá los
+            Conquista los
             <br />
             <span className="text-gradient-glacier">extremos</span> con
             <br />
@@ -37,32 +37,29 @@ export const HeroMountain = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 mb-16">
             <a href="#catalog" className="btn-primary text-base">
-              Ver Catálogo Técnico
+              Ver Catálogo
             </a>
             <a href="#tech" className="btn-secondary text-base">
-              Explorar Tecnología
+              Nuestra Tecnología
             </a>
           </div>
 
-          <div className="grid grid-cols-3 gap-6 max-w-md">
+          <div className="grid grid-cols-3 gap-6 max-w-md mb-4">
             <div className="text-center sm:text-left">
               <div className="flex items-center justify-center sm:justify-start gap-1.5 mb-1">
                 <Shield className="w-4 h-4 text-thermal-500" />
-                <span className="text-white font-bold text-xl">10K+</span>
               </div>
               <p className="text-slate-500 text-xs">Horas de Testing</p>
             </div>
             <div className="text-center sm:text-left">
               <div className="flex items-center justify-center sm:justify-start gap-1.5 mb-1">
                 <Thermometer className="w-4 h-4 text-glacier-400" />
-                <span className="text-white font-bold text-xl">-30°C</span>
               </div>
               <p className="text-slate-500 text-xs">Rating Máximo</p>
             </div>
             <div className="text-center sm:text-left">
               <div className="flex items-center justify-center sm:justify-start gap-1.5 mb-1">
                 <Droplets className="w-4 h-4 text-glacier-400" />
-                <span className="text-white font-bold text-xl">28K mm</span>
               </div>
               <p className="text-slate-500 text-xs">Impermeabilidad</p>
             </div>
