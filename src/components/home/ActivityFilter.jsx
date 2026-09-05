@@ -30,21 +30,21 @@ export const ActivityFilter = ({ activities, selected, onToggle }) => {
             key={activity.id}
             onClick={() => onToggle(activity.id)}
             className={`
-              group flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium
-              transition-all duration-200 border
+              group flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-sm font-medium
+              transition-all duration-200 active:scale-95
               ${
                 isActive
-                  ? 'bg-thermal-500/15 border-thermal-500/40 text-thermal-400 shadow-lg shadow-thermal-500/10'
-                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  ? 'border-thermal-500/40 bg-thermal-500/15 text-thermal-400 shadow-lg shadow-thermal-500/10'
+                  : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:-translate-y-0.5 hover:border-slate-700 hover:text-slate-200'
               }
             `}
           >
             {Icon && (
               <Icon
-                className={`w-4 h-4 transition-colors ${
+                className={`h-4 w-4 transition-transform duration-200 ${
                   isActive
                     ? 'text-thermal-500'
-                    : 'text-slate-500 group-hover:text-slate-400'
+                    : 'text-slate-500 group-hover:scale-110 group-hover:text-slate-400'
                 }`}
               />
             )}

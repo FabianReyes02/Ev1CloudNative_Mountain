@@ -21,7 +21,7 @@ export const mockProducts = [
     description:
       'Chaqueta de pluma 850-fill con aislamiento zonal. Máxima compresibilidad y calor en peso ultraligero para travesías largas.',
     price: 649,
-    image: 'https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?w=600&h=750&fit=crop',
+    image: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=600&h=750&fit=crop',
     membrane: 'DWR Repelente',
     tempRating: '-18°C',
     waterproof: '10,000 mm',
@@ -37,7 +37,7 @@ export const mockProducts = [
     description:
       'Hardshell versátil con ventilación completa bajo brazos. Equilibrio perfecto entre protección total y transpirabilidad.',
     price: 549,
-    image: 'https://images.unsplash.com/photo-1622260614927-208ad1c376d6?w=600&h=750&fit=crop',
+    image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=600&h=750&fit=crop',
     membrane: 'Gore-Tex Active',
     tempRating: '-12°C',
     waterproof: '20,000 mm',
@@ -67,7 +67,7 @@ export const mockProducts = [
     id: 5,
     name: 'Expedition Base Layer',
     description:
-      'Capa base merino技术合成 con control de olores y gestión de humedad avanzada. El fundamento de todo sistema de capas.',
+      'Capa base merino técnico-sintético con control de olores y gestión de humedad avanzada. El fundamento de todo sistema de capas.',
     price: 149,
     image: 'https://images.unsplash.com/photo-1483721310020-03333e577078?w=600&h=750&fit=crop',
     membrane: 'Merino Tech',
@@ -83,7 +83,7 @@ export const mockProducts = [
     id: 6,
     name: 'Pinnacle Shell',
     description:
-      'Hardshell ligero con construction mimalista. Diseñado para velocidad y protección en carreras de montaña y skyrunning.',
+      'Hardshell ligero con construcción minimalista. Diseñado para velocidad y protección en carreras de montaña y skyrunning.',
     price: 459,
     image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=750&fit=crop',
     membrane: 'Gore-Tex Shakedry',

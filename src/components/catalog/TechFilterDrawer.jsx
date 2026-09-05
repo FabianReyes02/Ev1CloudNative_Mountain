@@ -35,15 +35,15 @@ export const TechFilterDrawer = ({
 
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-          onClick={onClose}
-        />
-      )}
+      <div
+        className={`fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        onClick={onClose}
+      />
 
       <div
-        className={`fixed top-0 right-0 h-full w-80 bg-slate-900 border-l border-slate-800 z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-50 flex h-full w-80 flex-col rounded-l-2xl bg-slate-900 border-l border-slate-800 shadow-2xl shadow-slate-950/60 transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -60,7 +60,7 @@ export const TechFilterDrawer = ({
           </button>
         </div>
 
-        <div className="p-5 space-y-6 overflow-y-auto h-[calc(100%-140px)]">
+        <div className="flex-1 p-5 space-y-6 overflow-y-auto">
           <div>
             <button
               onClick={() => toggleSection('temp')}
@@ -191,7 +191,7 @@ export const TechFilterDrawer = ({
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-5 border-t border-slate-800 bg-slate-900">
+        <div className="p-5 border-t border-slate-800 bg-slate-900">
           <div className="flex gap-3">
             <button
               onClick={onReset}
