@@ -259,6 +259,10 @@
     background-size: 200% 100%;
   }
 
+  .auth-input {
+    @apply mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white placeholder-slate-600 transition-colors focus:border-glacier-500/60 focus:outline-none;
+  }
+
   .glow-thermal {
     box-shadow: 0 0 20px rgba(245, 158, 11, 0.16),
       0 0 60px rgba(245, 158, 11, 0.06);

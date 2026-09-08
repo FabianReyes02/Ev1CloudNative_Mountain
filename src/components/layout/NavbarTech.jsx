@@ -1,18 +1,25 @@
-import { useEffect, useState } from 'react';
-import { Menu, MountainSnow, Search, ShoppingCart, UserRound, X } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
-import { useToast } from '../ui/Toast';
+import { useEffect, useState } from "react";
+import {
+  Menu,
+  MountainSnow,
+  Search,
+  ShoppingCart,
+  UserRound,
+  X,
+} from "lucide-react";
+import { useCart } from "../../context/CartContext";
+import { useToast } from "../ui/Toast";
 
 const navLinks = [
-  { label: 'Catálogo', href: '#catalog' },
-  { label: 'Tecnología', href: '#tech' },
-  { label: 'Actividades', href: '#activities' },
+  { label: "Catálogo", href: "#catalog" },
+  { label: "Tecnología", href: "#tech" },
+  { label: "Actividades", href: "#activities" },
 ];
 
-export const NavbarTech = () => {
+export const NavbarTech = ({ onAuthOpen, user }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [active, setActive] = useState('#catalog');
+  const [active, setActive] = useState("#catalog");
   const { totals, openCart } = useCart();
   const toast = useToast();
 
@@ -30,22 +37,18 @@ export const NavbarTech = () => {
     };
 
     onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleAuth = () => {
-    toast('El inicio de sesión Azure AD se conectará en la integración del backend.', {
-      type: 'info',
-    });
-  };
+  const handleAuth = () => onAuthOpen();
 
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/60 shadow-lg shadow-slate-950/40'
-          : 'bg-transparent border-b border-transparent'
+          ? "bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/60 shadow-lg shadow-slate-950/40"
+          : "bg-transparent border-b border-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -72,14 +75,14 @@ export const NavbarTech = () => {
                 href={link.href}
                 className={`relative text-sm font-medium transition-colors ${
                   active === link.href
-                    ? 'text-white'
-                    : 'text-slate-400 hover:text-white'
+                    ? "text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 {link.label}
                 <span
                   className={`absolute -bottom-1.5 left-0 h-0.5 bg-thermal-500 rounded-full transition-all duration-300 ${
-                    active === link.href ? 'w-full' : 'w-0'
+                    active === link.href ? "w-full" : "w-0"
                   }`}
                 />
               </a>
@@ -89,8 +92,8 @@ export const NavbarTech = () => {
           <div className="hidden md:flex items-center gap-2.5">
             <button
               onClick={() =>
-                toast('Buscar en el catálogo estará disponible pronto.', {
-                  type: 'info',
+                toast("Buscar en el catálogo estará disponible pronto.", {
+                  type: "info",
                 })
               }
               className="p-2 text-slate-400 transition-all hover:text-white hover:bg-slate-800/80 rounded-lg active:scale-95"
@@ -104,7 +107,7 @@ export const NavbarTech = () => {
               className="flex items-center gap-2 rounded-lg border border-slate-700/80 bg-slate-900/60 px-3.5 py-2 text-sm font-medium text-slate-200 transition-all hover:border-glacier-500/40 hover:text-glacier-300 active:scale-[0.97]"
             >
               <UserRound className="w-4 h-4" />
-              Ingresar
+              {user ? user.name : "Ingresar"}
             </button>
 
             <button
@@ -127,7 +130,7 @@ export const NavbarTech = () => {
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden p-2 text-slate-300 transition-colors hover:text-white"
-            aria-label={isOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -152,7 +155,8 @@ export const NavbarTech = () => {
                 onClick={handleAuth}
                 className="btn-secondary flex-1 !py-2.5 text-sm"
               >
-                <UserRound className="w-4 h-4" /> Ingresar
+                <UserRound className="w-4 h-4" />{" "}
+                {user ? user.name : "Ingresar"}
               </button>
               <button
                 onClick={() => {

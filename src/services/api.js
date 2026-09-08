@@ -7,9 +7,14 @@ export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 const delay = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 const request = async (path, { method = 'GET', body, headers } = {}) => {
+  const token = localStorage.getItem('summitlab_token');
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json', ...headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
+    },
     body: body ? JSON.stringify(body) : undefined,
     credentials: 'include',
   });
@@ -19,7 +24,10 @@ const request = async (path, { method = 'GET', body, headers } = {}) => {
   }
 
   if (!response.ok) {
-    throw new Error(`api_error_${response.status}`);
+    const errorBody = await response.json().catch(() => null);
+    const error = new Error(errorBody?.error ?? `api_error_${response.status}`);
+    error.status = response.status;
+    throw error;
   }
 
   return response.json();
@@ -52,4 +60,9 @@ export const cartService = {
     }
     return request('/orders', { method: 'POST', body: payload });
   },
+};
+
+export const authService = {
+  login: (credentials) => request('/auth/ingreso', { method: 'POST', body: credentials }),
+  register: (credentials) => request('/auth/registro', { method: 'POST', body: credentials }),
 };

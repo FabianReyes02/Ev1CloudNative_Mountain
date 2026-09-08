@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Grid3X3,
@@ -6,47 +6,48 @@ import {
   Search,
   SlidersHorizontal,
   Sparkles,
-} from 'lucide-react';
-import { NavbarTech } from './components/layout/NavbarTech';
-import { FooterAlpine } from './components/layout/FooterAlpine';
-import { HeroMountain } from './components/home/HeroMountain';
-import { ActivityFilter } from './components/home/ActivityFilter';
-import { ProductCard } from './components/catalog/ProductCard';
-import { TechFilterDrawer } from './components/catalog/TechFilterDrawer';
-import { CartDrawer } from './components/cart/CartDrawer';
-import { Reveal } from './components/ui/Reveal';
-import { productService } from './services/api';
+} from "lucide-react";
+import { NavbarTech } from "./components/layout/NavbarTech";
+import { FooterAlpine } from "./components/layout/FooterAlpine";
+import { HeroMountain } from "./components/home/HeroMountain";
+import { ActivityFilter } from "./components/home/ActivityFilter";
+import { ProductCard } from "./components/catalog/ProductCard";
+import { TechFilterDrawer } from "./components/catalog/TechFilterDrawer";
+import { CartDrawer } from "./components/cart/CartDrawer";
+import { Reveal } from "./components/ui/Reveal";
+import { AuthDrawer } from "./components/auth/AuthDrawer";
+import { productService } from "./services/api";
 import {
   activities,
   membraneTypes,
   tempRanges,
   waterproofRanges,
-} from './data/mockProducts';
+} from "./data/mockProducts";
 
 const technologyCards = [
   {
-    title: 'Gore-Tex Pro',
-    subtitle: 'Máxima Protección',
-    temp: '-30°C',
-    wp: '28,000 mm',
-    desc: 'Triple capa con micropartículas de ePTFE. Para las condiciones más hostiles del planeta.',
-    accent: 'thermal',
+    title: "Gore-Tex Pro",
+    subtitle: "Máxima Protección",
+    temp: "-30°C",
+    wp: "28,000 mm",
+    desc: "Triple capa con micropartículas de ePTFE. Para las condiciones más hostiles del planeta.",
+    accent: "thermal",
   },
   {
-    title: 'Gore-Tex Active',
-    subtitle: 'Transpirabilidad Total',
-    temp: '-12°C',
-    wp: '20,000 mm',
-    desc: 'Construcción simplificada con membrana unida. Máxima respirabilidad para actividad intensa.',
-    accent: 'glacier',
+    title: "Gore-Tex Active",
+    subtitle: "Transpirabilidad Total",
+    temp: "-12°C",
+    wp: "20,000 mm",
+    desc: "Construcción simplificada con membrana unida. Máxima respirabilidad para actividad intensa.",
+    accent: "glacier",
   },
   {
-    title: 'NeoShell',
-    subtitle: 'Ventilación Activa',
-    temp: '-5°C',
-    wp: '15,000 mm',
-    desc: 'Micro-porosa activa con permeabilidad al aire. Equilibrio perfecto entre protección y ventilación.',
-    accent: 'thermal',
+    title: "NeoShell",
+    subtitle: "Ventilación Activa",
+    temp: "-5°C",
+    wp: "15,000 mm",
+    desc: "Micro-porosa activa con permeabilidad al aire. Equilibrio perfecto entre protección y ventilación.",
+    accent: "thermal",
   },
 ];
 
@@ -63,9 +64,17 @@ const SkeletonCard = () => (
 );
 
 function App() {
+  const [authOpen, setAuthOpen] = useState(false);
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("summitlab_user"));
+    } catch {
+      return null;
+    }
+  });
   const [selectedActivities, setSelectedActivities] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [gridCols, setGridCols] = useState(3);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -92,7 +101,7 @@ function App() {
 
   const toggleActivity = (id) => {
     setSelectedActivities((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
     );
   };
 
@@ -103,7 +112,7 @@ function App() {
   const resetFilters = () => {
     setFilters({ tempRange: null, waterproofRange: null, membrane: null });
     setSelectedActivities([]);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const parseTemp = (tempStr) => {
@@ -112,7 +121,7 @@ function App() {
   };
 
   const parseWaterproof = (wpStr) => {
-    const match = wpStr.replace(/,/g, '').match(/\d+/);
+    const match = wpStr.replace(/,/g, "").match(/\d+/);
     return match ? parseInt(match[0]) : 0;
   };
 
@@ -145,17 +154,17 @@ function App() {
 
       if (filters.waterproofRange) {
         const range = waterproofRanges.find(
-          (r) => r.id === filters.waterproofRange
+          (r) => r.id === filters.waterproofRange,
         );
         if (range) {
           const wp = parseWaterproof(product.waterproof);
-          if (range.id === 'basic') {
+          if (range.id === "basic") {
             if (wp >= 8000) return false;
-          } else if (range.id === 'ultra') {
+          } else if (range.id === "ultra") {
             if (wp < 25000) return false;
-          } else if (range.id === 'high') {
+          } else if (range.id === "high") {
             if (wp < 15000 || wp >= 25000) return false;
-          } else if (range.id === 'medium') {
+          } else if (range.id === "medium") {
             if (wp < 8000 || wp >= 15000) return false;
           }
         }
@@ -177,10 +186,20 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-950">
       <CartDrawer />
-      <NavbarTech />
+      <NavbarTech onAuthOpen={() => setAuthOpen(true)} user={user} />
+      <AuthDrawer
+        key={authOpen ? "auth-open" : "auth-closed"}
+        isOpen={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onAuthenticated={setUser}
+        user={user}
+      />
       <HeroMountain />
 
-      <section id="catalog" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <section
+        id="catalog"
+        className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
+      >
         <Reveal>
           <div className="mb-10">
             <div className="mb-3 flex items-center gap-3">
@@ -228,8 +247,8 @@ function App() {
                 onClick={() => setDrawerOpen(true)}
                 className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all active:scale-95 ${
                   activeFilterCount > 0
-                    ? 'border-thermal-500/40 bg-thermal-500/15 text-thermal-400'
-                    : 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                    ? "border-thermal-500/40 bg-thermal-500/15 text-thermal-400"
+                    : "border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-slate-200"
                 }`}
               >
                 <SlidersHorizontal className="h-4 w-4" />
@@ -254,8 +273,8 @@ function App() {
                   onClick={() => setGridCols(2)}
                   className={`p-2 transition-colors ${
                     gridCols === 2
-                      ? 'bg-slate-800 text-white'
-                      : 'text-slate-500 hover:text-slate-300'
+                      ? "bg-slate-800 text-white"
+                      : "text-slate-500 hover:text-slate-300"
                   }`}
                   aria-label="Dos columnas"
                 >
@@ -265,8 +284,8 @@ function App() {
                   onClick={() => setGridCols(3)}
                   className={`p-2 transition-colors ${
                     gridCols === 3
-                      ? 'bg-slate-800 text-white'
-                      : 'text-slate-500 hover:text-slate-300'
+                      ? "bg-slate-800 text-white"
+                      : "text-slate-500 hover:text-slate-300"
                   }`}
                   aria-label="Tres columnas"
                 >
@@ -281,8 +300,8 @@ function App() {
           <div
             className={`grid gap-6 ${
               gridCols === 2
-                ? 'grid-cols-1 sm:grid-cols-2'
-                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                ? "grid-cols-1 sm:grid-cols-2"
+                : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
             }`}
           >
             {Array.from({ length: 6 }).map((_, index) => (
@@ -293,8 +312,8 @@ function App() {
           <div
             className={`grid gap-6 ${
               gridCols === 2
-                ? 'grid-cols-1 sm:grid-cols-2'
-                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                ? "grid-cols-1 sm:grid-cols-2"
+                : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
             }`}
           >
             {filteredProducts.map((product, index) => (
@@ -343,7 +362,7 @@ function App() {
               </span>
             </div>
             <h2 className="font-display text-4xl font-bold tracking-tight text-white sm:text-5xl">
-              ¿Listo para tu próxima{' '}
+              ¿Listo para tu próxima{" "}
               <span className="text-gradient-aurora animate-gradient-x">
                 expedición
               </span>
@@ -354,7 +373,10 @@ function App() {
               y acceder a tarifas exclusivas de la comunidad Summit Lab.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <button className="btn-primary text-base">
+              <button
+                onClick={() => setAuthOpen(true)}
+                className="btn-primary text-base"
+              >
                 Crear cuenta
                 <ArrowRight className="h-4 w-4" />
               </button>
@@ -380,7 +402,7 @@ function App() {
                 </span>
               </div>
               <h2 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Protección Extrema,{' '}
+                Protección Extrema,{" "}
                 <span className="text-gradient-glacier">Ingeniería Real</span>
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-slate-400">
@@ -397,16 +419,16 @@ function App() {
                 <div className="group card-tech relative h-full overflow-hidden p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-slate-600">
                   <div
                     className={`pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100 ${
-                      tech.accent === 'thermal'
-                        ? 'bg-thermal-500/25'
-                        : 'bg-glacier-500/25'
+                      tech.accent === "thermal"
+                        ? "bg-thermal-500/25"
+                        : "bg-glacier-500/25"
                     }`}
                   />
                   <p
                     className={`mb-2 text-xs font-bold uppercase tracking-wider ${
-                      tech.accent === 'thermal'
-                        ? 'text-thermal-500'
-                        : 'text-glacier-400'
+                      tech.accent === "thermal"
+                        ? "text-thermal-500"
+                        : "text-glacier-400"
                     }`}
                   >
                     {tech.subtitle}
