@@ -68,7 +68,7 @@ export const AuthDrawer = ({ isOpen, onClose, onAuthenticated, user }) => {
         onClick={onClose}
         aria-label="Cerrar autenticación"
       />
-      <aside className="animate-slide-down relative flex h-full w-full max-w-md flex-col border-l border-slate-800 bg-slate-950 px-6 py-8 shadow-2xl shadow-black/50 sm:px-8">
+      <aside className="animate-slide-down relative flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-slate-800 bg-slate-950 px-6 py-8 shadow-2xl shadow-black/50 sm:px-8">
         <div className="mb-10 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <MountainSnow className="h-7 w-7 text-thermal-500" />
