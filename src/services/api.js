@@ -1,15 +1,14 @@
 import { mockProducts } from '../data/mockProducts';
-import { loginWithAzure, logoutFromAzure } from './azureAuth';
+import { loginWithAzure, logoutFromAzure, refreshToken } from './azureAuth';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/+$/, '');
 
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 
 const delay = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-const request = async (path, { method = 'GET', body, headers } = {}) => {
-  const token = localStorage.getItem('summitlab_token');
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+const doRequest = async (path, { method, body, headers, token }) => {
+  return fetch(`${API_BASE_URL}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
@@ -19,6 +18,24 @@ const request = async (path, { method = 'GET', body, headers } = {}) => {
     body: body ? JSON.stringify(body) : undefined,
     credentials: 'include',
   });
+};
+
+const request = async (path, { method = 'GET', body, headers } = {}) => {
+  let token = localStorage.getItem('summitlab_token');
+  let response = await doRequest(path, { method, body, headers, token });
+
+  if ((response.status === 401 || response.status === 403) && !USE_MOCK) {
+    const fresh = await refreshToken().catch(() => null);
+    if (fresh?.token) {
+      token = fresh.token;
+      localStorage.setItem('summitlab_token', token);
+      localStorage.setItem(
+        'summitlab_user',
+        JSON.stringify(fresh.user)
+      );
+      response = await doRequest(path, { method, body, headers, token });
+    }
+  }
 
   if (response.status === 401 || response.status === 403) {
     throw new Error('api_UNAUTHORIZED');

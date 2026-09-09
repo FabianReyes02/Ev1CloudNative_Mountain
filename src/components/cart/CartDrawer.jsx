@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   ArrowRight,
+  Check,
   LoaderCircle,
   Minus,
   Plus,
@@ -31,6 +32,7 @@ export const CartDrawer = () => {
   } = useCart();
   const toast = useToast();
   const [placing, setPlacing] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleCheckout = async () => {
     setPlacing(true);
@@ -44,7 +46,7 @@ export const CartDrawer = () => {
         })),
         subtotal: totals.subtotal,
       });
-      toast(`Pedido ${order.id} registrado. ¡Gracias por tu compra!`);
+      toast(`Compra realizada con éxito. Pedido ${order.id}`);
       clearCart();
       closeCart();
     } catch (error) {
@@ -56,6 +58,7 @@ export const CartDrawer = () => {
       );
     } finally {
       setPlacing(false);
+      setConfirmOpen(false);
     }
   };
 
@@ -209,7 +212,7 @@ export const CartDrawer = () => {
           </div>
 
           <button
-            onClick={handleCheckout}
+            onClick={() => setConfirmOpen(true)}
             disabled={placing || items.length === 0}
             className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -231,6 +234,89 @@ export const CartDrawer = () => {
           </p>
         </footer>
       </aside>
+
+      {confirmOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirmar compra"
+        >
+          <button
+            className="absolute inset-0 cursor-default bg-slate-950/75 backdrop-blur-sm"
+            onClick={() => setConfirmOpen(false)}
+            aria-label="Cerrar confirmación"
+          />
+          <div className="animate-scale-in relative w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl shadow-black/50">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-thermal-500/15">
+                  <ShoppingBag className="h-4.5 w-4.5 text-thermal-500" />
+                </span>
+                <div>
+                  <h3 className="font-display text-lg font-bold text-white">
+                    Confirmar compra
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Revisa tu pedido antes de continuar
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                className="shrink-0 rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-800 hover:text-white"
+                aria-label="Cerrar confirmación"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mb-5 space-y-2 rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">
+                  {totals.count} {totals.count === 1 ? 'artículo' : 'artículos'}
+                </span>
+                <span className="font-semibold text-white">
+                  {currency.format(totals.subtotal)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-t border-slate-800 pt-2">
+                <span className="text-slate-300 font-medium">Total</span>
+                <span className="text-lg font-extrabold text-white">
+                  {currency.format(totals.subtotal)}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmOpen(false)}
+                disabled={placing}
+                className="btn-secondary flex-1 !py-2.5 text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCheckout}
+                disabled={placing}
+                className="btn-primary flex-1 !py-2.5 text-sm"
+              >
+                {placing ? (
+                  <>
+                    <LoaderCircle className="w-4 h-4 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    Confirmar compra
+                    <Check className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

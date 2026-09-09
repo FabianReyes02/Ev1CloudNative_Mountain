@@ -31,6 +31,10 @@ export const prepareAzureAuth = async () => {
     msal.setActiveAccount(redirectResponse.account);
   }
 
+  return obtenerSesion(account);
+};
+
+async function obtenerSesion(account) {
   if (!account) {
     return null;
   }
@@ -47,6 +51,13 @@ export const prepareAzureAuth = async () => {
       email: account.username,
     },
   };
+}
+
+export const refreshToken = async () => {
+  await msalReady;
+  await msal.handleRedirectPromise();
+  const account = msal.getActiveAccount() ?? msal.getAllAccounts()[0];
+  return obtenerSesion(account);
 };
 
 export const loginWithAzure = async () => {
