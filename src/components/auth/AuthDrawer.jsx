@@ -20,11 +20,7 @@ export const AuthDrawer = ({ isOpen, onClose, onAuthenticated, user }) => {
     setStatus({ type: "", message: "" });
 
     try {
-      const response = await authService.login();
-      localStorage.setItem("summitlab_token", response.token);
-      localStorage.setItem("summitlab_user", JSON.stringify(response.user));
-      onAuthenticated(response.user);
-      onClose();
+      await authService.login();
     } catch (error) {
       const message = error.message || "No se pudo iniciar sesión con Azure.";
       setStatus({ type: "error", message });

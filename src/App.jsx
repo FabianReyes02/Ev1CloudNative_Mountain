@@ -17,6 +17,7 @@ import { CartDrawer } from "./components/cart/CartDrawer";
 import { Reveal } from "./components/ui/Reveal";
 import { AuthDrawer } from "./components/auth/AuthDrawer";
 import { productService } from "./services/api";
+import { prepareAzureAuth } from "./services/azureAuth";
 import {
   activities,
   membraneTypes,
@@ -78,6 +79,7 @@ function App() {
   const [gridCols, setGridCols] = useState(3);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [filters, setFilters] = useState({
     tempRange: null,
     waterproofRange: null,
@@ -93,6 +95,29 @@ function App() {
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    prepareAzureAuth()
+      .then((session) => {
+        if (cancelled || !session) return;
+        localStorage.setItem("summitlab_token", session.token);
+        localStorage.setItem("summitlab_user", JSON.stringify(session.user));
+        setUser(session.user);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          localStorage.removeItem("summitlab_token");
+          localStorage.removeItem("summitlab_user");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setAuthLoading(false);
       });
     return () => {
       cancelled = true;
@@ -192,7 +217,7 @@ function App() {
         isOpen={authOpen}
         onClose={() => setAuthOpen(false)}
         onAuthenticated={setUser}
-        user={user}
+        user={authLoading ? null : user}
       />
       <HeroMountain />
 
