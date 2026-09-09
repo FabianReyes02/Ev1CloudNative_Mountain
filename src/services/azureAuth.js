@@ -12,7 +12,7 @@ const msal = new PublicClientApplication({
   auth: {
     clientId,
     authority: `https://login.microsoftonline.com/${tenantId}`,
-    redirectUri: window.location.origin,
+    redirectUri: `${window.location.origin}/auth-redirect.html`,
   },
   cache: {
     cacheLocation: 'localStorage',
