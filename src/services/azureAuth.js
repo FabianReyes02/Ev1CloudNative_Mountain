@@ -3,6 +3,7 @@ import { PublicClientApplication } from '@azure/msal-browser';
 const clientId = import.meta.env.VITE_AZURE_CLIENT_ID;
 const tenantId = import.meta.env.VITE_AZURE_TENANT_ID;
 const apiScope = import.meta.env.VITE_AZURE_API_SCOPE;
+const redirectUri = `${window.location.origin}/auth-redirect.html`;
 
 if (!clientId || !tenantId || !apiScope) {
   throw new Error('Faltan VITE_AZURE_CLIENT_ID, VITE_AZURE_TENANT_ID o VITE_AZURE_API_SCOPE.');
@@ -12,7 +13,7 @@ const msal = new PublicClientApplication({
   auth: {
     clientId,
     authority: `https://login.microsoftonline.com/${tenantId}`,
-    redirectUri: `${window.location.origin}/auth-redirect.html`,
+    redirectUri,
   },
   cache: {
     cacheLocation: 'localStorage',
@@ -25,6 +26,7 @@ export const loginWithAzure = async () => {
   await msalReady;
   const loginResponse = await msal.loginPopup({
     scopes: [apiScope],
+    redirectUri,
   });
   msal.setActiveAccount(loginResponse.account);
   const tokenResponse = await msal.acquireTokenSilent({
