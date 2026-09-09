@@ -1,4 +1,5 @@
 import { mockProducts } from '../data/mockProducts';
+import { loginWithAzure, logoutFromAzure } from './azureAuth';
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
@@ -63,6 +64,6 @@ export const cartService = {
 };
 
 export const authService = {
-  login: (credentials) => request('/auth/ingreso', { method: 'POST', body: credentials }),
-  register: (credentials) => request('/auth/registro', { method: 'POST', body: credentials }),
+  login: loginWithAzure,
+  logout: logoutFromAzure,
 };
