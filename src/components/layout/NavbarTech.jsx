@@ -22,7 +22,7 @@ export const NavbarTech = ({ onAuthOpen, onLogout, user: azureUser }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("#catalog");
-  const { totals, openCart } = useCart();
+  const { totals, openCart, clearCart } = useCart();
   const { isAuthenticated, user: sessionUser, openAuthModal, logout } = useAuth();
   const user = sessionUser ?? azureUser;
   const authenticated = isAuthenticated || Boolean(azureUser);
@@ -55,6 +55,8 @@ export const NavbarTech = ({ onAuthOpen, onLogout, user: azureUser }) => {
   const handleLogout = () => {
     logout();
     onLogout?.();
+    // Sin rastro del usuario anterior: carrito vaciado junto a la sesión.
+    clearCart();
     toast('Sesión cerrada.', { type: 'info' });
   };
 

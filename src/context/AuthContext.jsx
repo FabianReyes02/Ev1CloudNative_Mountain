@@ -9,7 +9,6 @@ import {
 } from 'react';
 import {
   authService,
-  clearStoredSession,
   getStoredSession,
   verifyStoredToken,
 } from '../services/api';
@@ -69,7 +68,9 @@ export const AuthProvider = ({ children }) => {
   );
 
   const logout = useCallback(() => {
-    clearStoredSession();
+    // Pasa por authService para limpiar sesión + caché MSAL (si solo se
+    // borra la sesión, MSAL la restaura al recargar).
+    authService.logout();
     refreshStatus();
   }, [refreshStatus]);
 

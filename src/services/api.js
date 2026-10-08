@@ -245,17 +245,19 @@ export const authService = {
     return azure.loginWithAzure();
   },
 
-  logout: async () => {
-    // Primero se intenta el logout MSAL (usa el caché), y después se limpia
-    // todo: sesión local + caché MSAL (si el popup falla o lo bloquean).
-    try {
-      const azure = await loadAzure();
-      await azure.logoutFromAzure().catch(() => {});
-    } catch {
-      // Azure no configurado: basta con limpiar la sesión local.
-    }
+  logout: () => {
+    // Limpieza inmediata y síncrona: la UI responde al tiro aunque el
+    // popup de MSAL se cuelgue o lo bloqueen (antes eso dejaba la sesión).
     clearStoredSession();
     clearMsalCache();
+    // Intento de logout en Azure en segundo plano, con tope de 3s.
+    loadAzure()
+      .then((azure) =>
+        Promise.race([azure.logoutFromAzure().catch(() => {}), delay(3000)]),
+      )
+      .catch(() => {
+        // Azure no configurado: basta con la limpieza local ya hecha.
+      });
   },
 
   getSession: () => getStoredSession(),
