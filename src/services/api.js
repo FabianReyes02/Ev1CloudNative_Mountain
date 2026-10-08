@@ -69,6 +69,21 @@ export const setStoredSession = (session) => {
 
 export const clearStoredSession = () => setStoredSession(null);
 
+/** Limpieza del caché de MSAL (cuentas + tokens). Sin esto, al recargar la
+ * página `prepareAzureAuth` restaura la sesión aunque se haya cerrado. */
+export const clearMsalCache = () => {
+  try {
+    const doomed = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (key && key.startsWith('msal.')) doomed.push(key);
+    }
+    doomed.forEach((key) => window.localStorage.removeItem(key));
+  } catch {
+    // sin almacenamiento disponible
+  }
+};
+
 /** Verificación client-side de la sesión guardada (sin validar firma). */
 export const verifyStoredToken = (overrides) => {
   const session = getStoredSession();
@@ -231,13 +246,16 @@ export const authService = {
   },
 
   logout: async () => {
-    clearStoredSession();
+    // Primero se intenta el logout MSAL (usa el caché), y después se limpia
+    // todo: sesión local + caché MSAL (si el popup falla o lo bloquean).
     try {
       const azure = await loadAzure();
       await azure.logoutFromAzure().catch(() => {});
     } catch {
       // Azure no configurado: basta con limpiar la sesión local.
     }
+    clearStoredSession();
+    clearMsalCache();
   },
 
   getSession: () => getStoredSession(),
