@@ -74,7 +74,7 @@ function App() {
       return null;
     }
   });
-  const { openAuthModal } = useAuth();
+  const { openAuthModal, refreshStatus } = useAuth();
   const [selectedActivities, setSelectedActivities] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -112,11 +112,14 @@ function App() {
         if (cancelled || !session) return;
         setStoredSession({ token: session.token, user: session.user, azure: true });
         setUser(session.user);
+        // Sincroniza el AuthContext: si no, el checkout cree que no hay sesión.
+        refreshStatus();
       })
       .catch(() => {
         if (!cancelled) {
           localStorage.removeItem("summitlab_token");
           localStorage.removeItem("summitlab_user");
+          refreshStatus();
         }
       })
       .finally(() => {
