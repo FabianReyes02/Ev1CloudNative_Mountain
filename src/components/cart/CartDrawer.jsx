@@ -12,7 +12,7 @@ import {
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../ui/Toast';
-import { cartService } from '../../services/api';
+import { authService, cartService } from '../../services/api';
 import { handleImageError } from '../../lib/placeholderImage';
 
 const currency = new Intl.NumberFormat('es-CL', {
@@ -32,16 +32,22 @@ export const CartDrawer = () => {
     clearCart,
   } = useCart();
   const toast = useToast();
-  const { isAuthenticated, tokenStatus, openAuthModal } = useAuth();
+  const { isAuthenticated, tokenStatus } = useAuth();
   const [placing, setPlacing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  // Solo Microsoft: sin sesión se redirige al login de Azure.
+  const goMicrosoftLogin = () => {
+    toast('Redirigiendo al ingreso con Microsoft...', { type: 'info' });
+    authService.loginWithAzure();
+  };
 
   const handleCheckout = async () => {
     if (!isAuthenticated) {
       toast(tokenStatus.message ?? 'Necesitas iniciar sesión para completar tu pedido.', {
         type: 'error',
       });
-      openAuthModal('login');
+      goMicrosoftLogin();
       return;
     }
     setPlacing(true);
@@ -63,7 +69,7 @@ export const CartDrawer = () => {
         toast(error.detail ?? 'Necesitas iniciar sesión para completar tu pedido.', {
           type: 'error',
         });
-        openAuthModal('login');
+        goMicrosoftLogin();
       } else {
         toast(
           error.detail ?? 'No se pudo procesar el pedido. Intenta nuevamente.',

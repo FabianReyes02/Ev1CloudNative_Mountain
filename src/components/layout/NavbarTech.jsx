@@ -11,6 +11,7 @@ import {
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../ui/Toast";
+import { authService } from "../../services/api";
 
 const navLinks = [
   { label: "Catálogo", href: "#catalog" },
@@ -23,7 +24,7 @@ export const NavbarTech = ({ onAuthOpen, onLogout, user: azureUser }) => {
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("#catalog");
   const { totals, openCart, clearCart } = useCart();
-  const { isAuthenticated, user: sessionUser, openAuthModal, logout } = useAuth();
+  const { isAuthenticated, user: sessionUser, logout } = useAuth();
   const user = sessionUser ?? azureUser;
   const authenticated = isAuthenticated || Boolean(azureUser);
   const toast = useToast();
@@ -46,10 +47,10 @@ export const NavbarTech = ({ onAuthOpen, onLogout, user: azureUser }) => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Ingresar abre el drawer Azure (MSAL) si está disponible, si no el modal local.
+  // Solo Microsoft: Ingresar abre el drawer Azure, o redirige si no está.
   const handleAuth = () => {
     if (onAuthOpen) onAuthOpen();
-    else openAuthModal('login');
+    else authService.loginWithAzure();
   };
 
   const handleLogout = () => {

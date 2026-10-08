@@ -18,8 +18,6 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(() => getStoredSession());
   const [status, setStatus] = useState(() => verifyStoredToken());
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState('login');
 
   const refreshStatus = useCallback(() => {
     setSession(getStoredSession());
@@ -40,18 +38,12 @@ export const AuthProvider = ({ children }) => {
     };
   }, [refreshStatus]);
 
-  const openAuthModal = useCallback((mode = 'login') => {
-    setAuthModalMode(mode);
-    setAuthModalOpen(true);
-  }, []);
-
-  const closeAuthModal = useCallback(() => setAuthModalOpen(false), []);
-
+  // Solo Microsoft (login local/registro eliminados de la UI): estas
+  // funciones quedan para compatibilidad pero ya nadie las llama.
   const login = useCallback(
     async (credentials) => {
       const next = await authService.login(credentials);
       refreshStatus();
-      setAuthModalOpen(false);
       return next;
     },
     [refreshStatus],
@@ -61,7 +53,6 @@ export const AuthProvider = ({ children }) => {
     async (payload) => {
       const next = await authService.register(payload);
       refreshStatus();
-      setAuthModalOpen(false);
       return next;
     },
     [refreshStatus],
@@ -81,11 +72,6 @@ export const AuthProvider = ({ children }) => {
       token: session?.token ?? null,
       isAuthenticated: status.valid,
       tokenStatus: status,
-      authModalOpen,
-      authModalMode,
-      setAuthModalMode,
-      openAuthModal,
-      closeAuthModal,
       login,
       register,
       logout,
@@ -94,10 +80,6 @@ export const AuthProvider = ({ children }) => {
     [
       session,
       status,
-      authModalOpen,
-      authModalMode,
-      openAuthModal,
-      closeAuthModal,
       login,
       register,
       logout,

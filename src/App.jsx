@@ -16,7 +16,6 @@ import { TechFilterDrawer } from "./components/catalog/TechFilterDrawer";
 import { CartDrawer } from "./components/cart/CartDrawer";
 import { Reveal } from "./components/ui/Reveal";
 import { AuthDrawer } from "./components/auth/AuthDrawer";
-import { AuthModal } from "./components/auth/AuthModal";
 import { productService, setStoredSession } from "./services/api";
 import { useAuth } from "./context/AuthContext";
 import {
@@ -74,7 +73,7 @@ function App() {
       return null;
     }
   });
-  const { openAuthModal, refreshStatus } = useAuth();
+  const { refreshStatus } = useAuth();
   const [selectedActivities, setSelectedActivities] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -217,7 +216,6 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-950">
       <CartDrawer />
-      <AuthModal />
       <NavbarTech onAuthOpen={() => setAuthOpen(true)} onLogout={() => setUser(null)} user={user} />
       <AuthDrawer
         key={authOpen ? "auth-open" : "auth-closed"}
@@ -405,7 +403,7 @@ function App() {
               y acceder a tarifas exclusivas de la comunidad Summit Lab.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <button onClick={() => openAuthModal('register')} className="btn-primary text-base">
+              <button onClick={() => setAuthOpen(true)} className="btn-primary text-base">
                 Crear cuenta
                 <ArrowRight className="h-4 w-4" />
               </button>
