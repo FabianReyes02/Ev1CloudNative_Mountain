@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../ui/Toast';
 import { cartService } from '../../services/api';
 import { handleImageError } from '../../lib/placeholderImage';
@@ -31,10 +32,18 @@ export const CartDrawer = () => {
     clearCart,
   } = useCart();
   const toast = useToast();
+  const { isAuthenticated, tokenStatus, openAuthModal } = useAuth();
   const [placing, setPlacing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleCheckout = async () => {
+    if (!isAuthenticated) {
+      toast(tokenStatus.message ?? 'Necesitas iniciar sesión para completar tu pedido.', {
+        type: 'error',
+      });
+      openAuthModal('login');
+      return;
+    }
     setPlacing(true);
     try {
       const order = await cartService.create({
@@ -50,12 +59,17 @@ export const CartDrawer = () => {
       clearCart();
       closeCart();
     } catch (error) {
-      toast(
-        error.message === 'api_UNAUTHORIZED'
-          ? 'Necesitas iniciar sesión para completar tu pedido.'
-          : 'No se pudo procesar el pedido. Intenta nuevamente.',
-        { type: 'error' }
-      );
+      if (error.message === 'api_UNAUTHORIZED') {
+        toast(error.detail ?? 'Necesitas iniciar sesión para completar tu pedido.', {
+          type: 'error',
+        });
+        openAuthModal('login');
+      } else {
+        toast(
+          error.detail ?? 'No se pudo procesar el pedido. Intenta nuevamente.',
+          { type: 'error' },
+        );
+      }
     } finally {
       setPlacing(false);
       setConfirmOpen(false);

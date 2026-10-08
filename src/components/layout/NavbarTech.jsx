@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  LogOut,
   Menu,
   MountainSnow,
   Search,
@@ -8,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../ui/Toast";
 
 const navLinks = [
@@ -16,11 +18,14 @@ const navLinks = [
   { label: "Actividades", href: "#activities" },
 ];
 
-export const NavbarTech = ({ onAuthOpen, user }) => {
+export const NavbarTech = ({ onAuthOpen, onLogout, user: azureUser }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("#catalog");
   const { totals, openCart } = useCart();
+  const { isAuthenticated, user: sessionUser, openAuthModal, logout } = useAuth();
+  const user = sessionUser ?? azureUser;
+  const authenticated = isAuthenticated || Boolean(azureUser);
   const toast = useToast();
 
   useEffect(() => {
@@ -41,7 +46,19 @@ export const NavbarTech = ({ onAuthOpen, user }) => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleAuth = () => onAuthOpen();
+  // Ingresar abre el drawer Azure (MSAL) si está disponible, si no el modal local.
+  const handleAuth = () => {
+    if (onAuthOpen) onAuthOpen();
+    else openAuthModal('login');
+  };
+
+  const handleLogout = () => {
+    logout();
+    onLogout?.();
+    toast('Sesión cerrada.', { type: 'info' });
+  };
+
+  const userInitial = (user?.name ?? user?.email ?? '?').trim().charAt(0).toUpperCase();
 
   return (
     <nav
@@ -109,6 +126,24 @@ export const NavbarTech = ({ onAuthOpen, user }) => {
               <UserRound className="w-4 h-4" />
               {user ? user.name : "Ingresar"}
             </button>
+            {authenticated && (
+              <span
+                title={user?.email ?? 'Sesión verificada'}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-500/15 text-xs font-bold text-emerald-300"
+              >
+                {userInitial}
+              </span>
+            )}
+            {authenticated && (
+              <button
+                onClick={handleLogout}
+                className="p-2 text-slate-400 transition-all hover:text-white hover:bg-slate-800/80 rounded-lg active:scale-95"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            )}
 
             <button
               onClick={openCart}
@@ -151,13 +186,21 @@ export const NavbarTech = ({ onAuthOpen, user }) => {
               </a>
             ))}
             <div className="pt-2 border-t border-slate-800 flex gap-2">
-              <button
-                onClick={handleAuth}
-                className="btn-secondary flex-1 !py-2.5 text-sm"
-              >
-                <UserRound className="w-4 h-4" />{" "}
-                {user ? user.name : "Ingresar"}
-              </button>
+              {authenticated ? (
+                <button
+                  onClick={handleLogout}
+                  className="btn-secondary flex-1 !py-2.5 text-sm"
+                >
+                  <LogOut className="w-4 h-4" /> Salir{user?.email ? ` (${user.email})` : ''}
+                </button>
+              ) : (
+                <button
+                  onClick={handleAuth}
+                  className="btn-secondary flex-1 !py-2.5 text-sm"
+                >
+                  <UserRound className="w-4 h-4" /> Ingresar
+                </button>
+              )}
               <button
                 onClick={() => {
                   setIsOpen(false);

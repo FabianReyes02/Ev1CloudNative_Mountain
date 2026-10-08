@@ -16,8 +16,9 @@ import { TechFilterDrawer } from "./components/catalog/TechFilterDrawer";
 import { CartDrawer } from "./components/cart/CartDrawer";
 import { Reveal } from "./components/ui/Reveal";
 import { AuthDrawer } from "./components/auth/AuthDrawer";
-import { productService } from "./services/api";
-import { prepareAzureAuth } from "./services/azureAuth";
+import { AuthModal } from "./components/auth/AuthModal";
+import { productService, setStoredSession } from "./services/api";
+import { useAuth } from "./context/AuthContext";
 import {
   activities,
   membraneTypes,
@@ -73,6 +74,7 @@ function App() {
       return null;
     }
   });
+  const { openAuthModal } = useAuth();
   const [selectedActivities, setSelectedActivities] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -103,11 +105,12 @@ function App() {
 
   useEffect(() => {
     let cancelled = false;
-    prepareAzureAuth()
+    // MSAL es opcional: si Azure no está configurado, se sigue en modo local/mock.
+    import("./services/azureAuth")
+      .then((azure) => azure.prepareAzureAuth())
       .then((session) => {
         if (cancelled || !session) return;
-        localStorage.setItem("summitlab_token", session.token);
-        localStorage.setItem("summitlab_user", JSON.stringify(session.user));
+        setStoredSession({ token: session.token, user: session.user, azure: true });
         setUser(session.user);
       })
       .catch(() => {
@@ -211,7 +214,8 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-950">
       <CartDrawer />
-      <NavbarTech onAuthOpen={() => setAuthOpen(true)} user={user} />
+      <AuthModal />
+      <NavbarTech onAuthOpen={() => setAuthOpen(true)} onLogout={() => setUser(null)} user={user} />
       <AuthDrawer
         key={authOpen ? "auth-open" : "auth-closed"}
         isOpen={authOpen}
@@ -398,10 +402,7 @@ function App() {
               y acceder a tarifas exclusivas de la comunidad Summit Lab.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <button
-                onClick={() => setAuthOpen(true)}
-                className="btn-primary text-base"
-              >
+              <button onClick={() => openAuthModal('register')} className="btn-primary text-base">
                 Crear cuenta
                 <ArrowRight className="h-4 w-4" />
               </button>

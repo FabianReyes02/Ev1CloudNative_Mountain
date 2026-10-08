@@ -1,13 +1,99 @@
 import { mockProducts } from '../data/mockProducts';
-import { loginWithAzure, logoutFromAzure, refreshToken } from './azureAuth';
+import {
+  JWT_EXPECTED_AUDIENCES,
+  JWT_EXPECTED_ISSUERS,
+  JWT_REQUIRED_SCOPES,
+  describeTokenReason,
+  verifyToken,
+} from '../lib/token';
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/+$/, '');
 
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 
+const AUTH_STORAGE_KEY = 'summitlab.auth.v1';
+const LEGACY_TOKEN_KEY = 'summitlab_token';
+const LEGACY_USER_KEY = 'summitlab_user';
+
 const delay = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-const doRequest = async (path, { method, body, headers, token }) => {
+const base64UrlEncode = (value) =>
+  window
+    .btoa(String.fromCharCode(...new TextEncoder().encode(value)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+const readSession = () => {
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const getStoredSession = () => {
+  const session = readSession();
+  if (session) return session;
+  // Compatibilidad con la sesión Azure (claves legacy summitlab_token/user).
+  try {
+    const token = window.localStorage.getItem(LEGACY_TOKEN_KEY);
+    if (!token) return null;
+    const rawUser = window.localStorage.getItem(LEGACY_USER_KEY);
+    return { token, user: rawUser ? JSON.parse(rawUser) : null, azure: true };
+  } catch {
+    return null;
+  }
+};
+
+export const getStoredToken = () =>
+  readSession()?.token ?? window.localStorage.getItem(LEGACY_TOKEN_KEY) ?? null;
+
+export const setStoredSession = (session) => {
+  try {
+    if (!session) {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+      window.localStorage.removeItem(LEGACY_TOKEN_KEY);
+      window.localStorage.removeItem(LEGACY_USER_KEY);
+    } else {
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+      // Espejo legacy para el flujo Azure existente.
+      if (session.token) window.localStorage.setItem(LEGACY_TOKEN_KEY, session.token);
+      if (session.user) window.localStorage.setItem(LEGACY_USER_KEY, JSON.stringify(session.user));
+    }
+  } catch {
+    // sin almacenamiento disponible
+  }
+};
+
+export const clearStoredSession = () => setStoredSession(null);
+
+/** Verificación client-side de la sesión guardada (sin validar firma). */
+export const verifyStoredToken = (overrides) => {
+  const session = getStoredSession();
+  const result = verifyToken(session?.token, overrides);
+  return { session, ...result, message: result.valid ? null : describeTokenReason(result.reason) };
+};
+
+export const isAuthenticated = (overrides) =>
+  verifyStoredToken(overrides).valid;
+
+// Carga perezosa de MSAL: azureAuth.js lanza si faltan las env de Azure,
+// así el modo mock/local sigue funcionando sin configurar Entra ID.
+const loadAzure = () => import('./azureAuth');
+
+const azureRefresh = async () => {
+  try {
+    const azure = await loadAzure();
+    const session = await azure.refreshToken();
+    return session;
+  } catch {
+    return null;
+  }
+};
+
+const doRequest = async (path, { method = 'GET', body, headers, token } = {}) => {
   return fetch(`${API_BASE_URL}${path}`, {
     method,
     headers: {
@@ -20,35 +106,141 @@ const doRequest = async (path, { method, body, headers, token }) => {
   });
 };
 
+const parseErrorBody = async (response) => {
+  try {
+    const data = await response.clone().json();
+    if (data && typeof data.error === 'string') return data.error;
+    if (data && typeof data.message === 'string') return data.message;
+  } catch {
+    // no es JSON
+  }
+  return null;
+};
+
 const request = async (path, { method = 'GET', body, headers } = {}) => {
-  let token = localStorage.getItem('summitlab_token');
+  let token = getStoredToken();
   let response = await doRequest(path, { method, body, headers, token });
 
   if ((response.status === 401 || response.status === 403) && !USE_MOCK) {
-    const fresh = await refreshToken().catch(() => null);
+    const fresh = await azureRefresh().catch(() => null);
     if (fresh?.token) {
       token = fresh.token;
-      localStorage.setItem('summitlab_token', token);
-      localStorage.setItem(
-        'summitlab_user',
-        JSON.stringify(fresh.user)
-      );
+      setStoredSession({ token: fresh.token, user: fresh.user ?? null, azure: true });
       response = await doRequest(path, { method, body, headers, token });
     }
   }
 
   if (response.status === 401 || response.status === 403) {
-    throw new Error('api_UNAUTHORIZED');
-  }
-
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => null);
-    const error = new Error(errorBody?.error ?? `api_error_${response.status}`);
+    const detail = await parseErrorBody(response);
+    const error = new Error('api_UNAUTHORIZED');
     error.status = response.status;
+    error.detail = detail;
+    // Si el backend rechaza el token y no es un intento de login/registro,
+    // la sesión local ya no sirve: se limpia para forzar re-login.
+    if (response.status === 401 && !path.startsWith('/auth/')) {
+      clearStoredSession();
+    }
     throw error;
   }
 
+  if (!response.ok) {
+    const detail = await parseErrorBody(response);
+    const errorBody = detail ? { error: detail } : null;
+    const error = new Error(errorBody?.error ?? `api_error_${response.status}`);
+    error.status = response.status;
+    error.detail = detail;
+    throw error;
+  }
+
+  if (response.status === 204) return null;
   return response.json();
+};
+
+const buildMockSession = (email, name) => {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = base64UrlEncode(
+    JSON.stringify({
+      sub: 'mock-1',
+      iss: JWT_EXPECTED_ISSUERS[0] ?? 'pedidos360-usuarios',
+      aud: JWT_EXPECTED_AUDIENCES[0] ?? 'pedidos360-api',
+      iat: nowSec,
+      exp: nowSec + 8 * 3600,
+      email,
+      name: name ?? email.split('@')[0],
+      roles: 'CLIENTE',
+      scp: JWT_REQUIRED_SCOPES[0] ?? 'orders.write',
+    }),
+  );
+  return {
+    token: `${header}.${payload}.mock-signature`,
+    tokenType: 'Bearer',
+    expiresIn: 8 * 3600,
+    user: {
+      id: 1,
+      name: name ?? email.split('@')[0],
+      email,
+      roles: ['CLIENTE'],
+    },
+    mock: true,
+  };
+};
+
+export const authService = {
+  // Login local (email/password) o Azure (sin argumentos, redirect MSAL).
+  login: async (credentials) => {
+    if (credentials?.email) {
+      const { email, password } = credentials;
+      if (USE_MOCK) {
+        await delay(420);
+        if (!email || !password) throw new Error('api_error_400');
+        const session = buildMockSession(email.trim().toLowerCase());
+        setStoredSession(session);
+        return session;
+      }
+      const session = await request('/auth/ingreso', {
+        method: 'POST',
+        body: { email, password },
+      });
+      setStoredSession(session);
+      return session;
+    }
+    const azure = await loadAzure();
+    return azure.loginWithAzure();
+  },
+
+  register: async ({ email, password, name }) => {
+    if (USE_MOCK) {
+      await delay(520);
+      if (!email || !password) throw new Error('api_error_400');
+      const session = buildMockSession(email.trim().toLowerCase(), name);
+      setStoredSession(session);
+      return session;
+    }
+    const session = await request('/auth/registro', {
+      method: 'POST',
+      body: { email, password, name },
+    });
+    setStoredSession(session);
+    return session;
+  },
+
+  loginWithAzure: async () => {
+    const azure = await loadAzure();
+    return azure.loginWithAzure();
+  },
+
+  logout: async () => {
+    clearStoredSession();
+    try {
+      const azure = await loadAzure();
+      await azure.logoutFromAzure().catch(() => {});
+    } catch {
+      // Azure no configurado: basta con limpiar la sesión local.
+    }
+  },
+
+  getSession: () => getStoredSession(),
 };
 
 export const productService = {
@@ -74,13 +266,18 @@ export const cartService = {
   create: async (payload) => {
     if (USE_MOCK) {
       await delay(520);
+      // En modo mock también se exige sesión válida para probar el flujo real.
+      const check = verifyStoredToken();
+      if (!check.valid) {
+        const error = new Error('api_UNAUTHORIZED');
+        error.status = 401;
+        error.detail = check.message;
+        throw error;
+      }
       return { id: `PEDIDO-${String(Date.now()).slice(-6)}` };
     }
     return request('/orders', { method: 'POST', body: payload });
   },
 };
 
-export const authService = {
-  login: loginWithAzure,
-  logout: logoutFromAzure,
-};
+export { describeTokenReason, verifyToken };
