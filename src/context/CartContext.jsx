@@ -15,7 +15,7 @@ const CartContext = createContext(null);
 
 const STORAGE_KEY = 'summitlab.cart.v1';
 
-/** Item del MS (productId) -> item local (id, conserva imagen y extras). */
+/** Item del MS (productId) -> item local (id, conserva extras locales). */
 const itemsToLocal = (remoteItems, prev = []) =>
   (remoteItems ?? []).map((item) => {
     const local = prev.find((p) => p.id === item.productId);
@@ -24,7 +24,7 @@ const itemsToLocal = (remoteItems, prev = []) =>
       name: item.name ?? local?.name ?? '',
       price: item.price ?? local?.price ?? 0,
       quantity: item.quantity ?? 1,
-      ...(local?.image ? { image: local.image } : {}),
+      image: item.image ?? local?.image ?? '',
     };
   });
 
@@ -51,14 +51,16 @@ export const CartProvider = ({ children }) => {
     }
   }, [items]);
 
-  // Al autenticar: subir el carrito local al MS y traer el remoto
-  // (una vez por sesión). Sin sesión o en mock: 100% local.
+  // Al autenticar: reemplazar el carrito del MS con el local y traerlo
+  // de vuelta (una vez por sesión). Vaciar primero evita que las
+  // cantidades se sumen en cada login. Sin sesión o en mock: 100% local.
   useEffect(() => {
     if (!serverOn || syncedForSession.current) return;
     syncedForSession.current = true;
     (async () => {
       try {
         const local = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]');
+        await serverCartService.clear().catch(() => {});
         for (const item of local) {
           await serverCartService
             .addItem({
@@ -66,12 +68,13 @@ export const CartProvider = ({ children }) => {
               name: item.name,
               price: item.price,
               quantity: item.quantity,
+              image: item.image,
             })
             .catch(() => {});
         }
         const remote = await serverCartService.get().catch(() => null);
         if (remote) {
-          setItems((prev) => itemsToLocal(remote.items, [...prev, ...local]));
+          setItems(itemsToLocal(remote.items, local));
         }
       } catch {
         // sin red: se sigue con el carrito local
@@ -103,6 +106,7 @@ export const CartProvider = ({ children }) => {
             name: product.name,
             price: product.price,
             quantity,
+            image: product.image,
           })
           .catch(() => {});
       }
