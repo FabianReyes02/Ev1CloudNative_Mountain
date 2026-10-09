@@ -54,10 +54,10 @@ export const NavbarTech = ({ onAuthOpen, onLogout, user: azureUser }) => {
   };
 
   const handleLogout = () => {
+    // Primero el carrito (vacía el MS con el token aún válido), después la sesión.
+    clearCart();
     logout();
     onLogout?.();
-    // Sin rastro del usuario anterior: carrito vaciado junto a la sesión.
-    clearCart();
     toast('Sesión cerrada.', { type: 'info' });
   };
 

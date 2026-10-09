@@ -5,14 +5,31 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
+import { USE_MOCK, serverCartService } from '../services/api';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext(null);
 
 const STORAGE_KEY = 'summitlab.cart.v1';
 
+/** Item del MS (productId) -> item local (id, conserva imagen y extras). */
+const itemsToLocal = (remoteItems, prev = []) =>
+  (remoteItems ?? []).map((item) => {
+    const local = prev.find((p) => p.id === item.productId);
+    return {
+      id: item.productId,
+      name: item.name ?? local?.name ?? '',
+      price: item.price ?? local?.price ?? 0,
+      quantity: item.quantity ?? 1,
+      ...(local?.image ? { image: local.image } : {}),
+    };
+  });
+
 export const CartProvider = ({ children }) => {
+  const { isAuthenticated } = useAuth();
   const [items, setItems] = useState(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -23,6 +40,8 @@ export const CartProvider = ({ children }) => {
   });
 
   const [isOpen, setIsOpen] = useState(false);
+  const serverOn = !USE_MOCK && isAuthenticated;
+  const syncedForSession = useRef(false);
 
   useEffect(() => {
     try {
@@ -32,23 +51,74 @@ export const CartProvider = ({ children }) => {
     }
   }, [items]);
 
-  const addItem = useCallback((product, quantity = 1) => {
-    setItems((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
+  // Al autenticar: subir el carrito local al MS y traer el remoto
+  // (una vez por sesión). Sin sesión o en mock: 100% local.
+  useEffect(() => {
+    if (!serverOn || syncedForSession.current) return;
+    syncedForSession.current = true;
+    (async () => {
+      try {
+        const local = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]');
+        for (const item of local) {
+          await serverCartService
+            .addItem({
+              productId: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+            })
+            .catch(() => {});
+        }
+        const remote = await serverCartService.get().catch(() => null);
+        if (remote) {
+          setItems((prev) => itemsToLocal(remote.items, [...prev, ...local]));
+        }
+      } catch {
+        // sin red: se sigue con el carrito local
       }
-      return [...prev, { ...product, quantity }];
-    });
-  }, []);
+    })();
+  }, [serverOn]);
 
-  const removeItem = useCallback((id) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-  }, []);
+  useEffect(() => {
+    if (!isAuthenticated) syncedForSession.current = false;
+  }, [isAuthenticated]);
+
+  const addItem = useCallback(
+    (product, quantity = 1) => {
+      setItems((prev) => {
+        const existing = prev.find((item) => item.id === product.id);
+        if (existing) {
+          return prev.map((item) =>
+            item.id === product.id
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          );
+        }
+        return [...prev, { ...product, quantity }];
+      });
+      if (serverOn) {
+        serverCartService
+          .addItem({
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            quantity,
+          })
+          .catch(() => {});
+      }
+    },
+    [serverOn]
+  );
+
+  const removeItem = useCallback(
+    (id) => {
+      setItems((prev) => prev.filter((item) => item.id !== id));
+      if (serverOn) {
+        serverCartService.removeItem(id).catch(() => {});
+      }
+    },
+    [serverOn]
+  );
 
   const updateQuantity = useCallback(
     (id, quantity) => {
@@ -59,11 +129,20 @@ export const CartProvider = ({ children }) => {
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, quantity } : item))
       );
+      if (serverOn) {
+        serverCartService.setQuantity(id, quantity).catch(() => {});
+      }
     },
-    [removeItem]
+    [removeItem, serverOn]
   );
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => {
+    // Primero el servidor (con token aún válido), después lo local.
+    if (serverOn) {
+      serverCartService.clear().catch(() => {});
+    }
+    setItems([]);
+  }, [serverOn]);
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);

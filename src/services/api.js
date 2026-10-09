@@ -300,4 +300,17 @@ export const cartService = {
   },
 };
 
+/**
+ * Carrito persistente (MS carrito, backend-2). Solo con sesión: el email
+ * dueño sale del JWT. En modo mock no se usa (carrito 100% local).
+ */
+export const serverCartService = {
+  get: () => request('/cart'),
+  addItem: (item) => request('/cart/items', { method: 'POST', body: item }),
+  setQuantity: (productId, quantity) =>
+    request(`/cart/items/${productId}`, { method: 'PUT', body: { quantity } }),
+  removeItem: (productId) => request(`/cart/items/${productId}`, { method: 'DELETE' }),
+  clear: () => request('/cart', { method: 'DELETE' }),
+};
+
 export { describeTokenReason, verifyToken };
