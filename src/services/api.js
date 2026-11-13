@@ -7,7 +7,9 @@ import {
   verifyToken,
 } from '../lib/token';
 
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/+$/, '');
+// '' (vacío, como deja el Dockerfile si no se pasa el build-arg) también
+// debe caer al default relativo /api, por eso || y no ??.
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
 
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 
