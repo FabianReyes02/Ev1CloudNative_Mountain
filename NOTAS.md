@@ -126,3 +126,50 @@ Hoy todo funciona con datos simulados. La integración real está preparada en
 - No hay página de detalle de producto ni vista 404 (rutas con anclas únicamente).
 - No hay test runners configurados (solo lint + build).
 - Si se agrega React Router, migrar las anclas `#catalog/#tech/#activities` a rutas.
+
+---
+
+## 8. Despliegue AWS: API Gateway + nginx + Kafka (nov 2026)
+
+Estado del flujo completo en AWS (VPC 10.0.0.0/16, IPs según
+`Ev1CloudNative_Mountain_backend_parte3/docs/DESPLIEGUE_AWS.md`):
+
+```
+Browser
+  └─ API Gateway HTTP (frontend-mountain, id 40k6dgt9t8, stage $default)
+       ruta $default          → integración http://34.233.99.190 (root /)
+       ruta ANY /{proxy+}     → integración http://34.233.99.190/{proxy}
+            └─ nginx (este repo, EC2 10.0.1.10)
+                 ├─ /            → index.html + /assets (cache inmutable)
+                 ├─ /api/products|orders|auth|users...  → EC2 10.0.1.11 (8081-8083)
+                 ├─ /api/notifications|cart|shipments   → EC2 10.0.1.12 (8084-8086)
+                 └─ /api/payments|recommendations       → EC2 10.0.1.13 (8087-8088)
+```
+
+### Puntos clave aprendidos (no romper)
+
+- **IntegrationUri sin `{proxy}`** hace que el API Gateway no reenvíe el path:
+  todo llegaba a nginx como `/` y los `.js` volvían como `text/html`
+  → **página en blanco**. La ruta `/{proxy+}` debe usar `http://IP/{proxy}`
+  y la raíz una integración aparte (o `$default`).
+- El esquema de la integración es **`http://` (puerto 80)**: la EC2 no tiene TLS.
+- `nginx.conf` es una config COMPLETA (bloques `events{}/http{}`): en el
+  Dockerfile va a `/etc/nginx/nginx.conf`, **no** a `conf.d/default.conf`
+  (ahí el contenedor muere al arrancar).
+- IPs upstream reales: backend-1 `10.0.1.11`, backend-2 `10.0.1.12`,
+  backend-3 `10.0.1.13` (antes estaban `.111/.112/.113` y daba 504).
+
+### Mensajería: Kafka (backend-3) reemplaza RabbitMQ (backend-1)
+
+RabbitMQ fue eliminado por completo. El broker es **Kafka (KRaft)** en
+backend-3 (`pedidos360-kafka`, listener EXTERNAL `29092`, UI en `8090` solo
+por túnel SSH):
+
+- `servicio-pedidos` (B1) publica `pedido.creado` en el tópico **`pedidos.creados`**
+  (JSON plano, clave = `orderId`).
+- Consumen el mismo tópico con groupId propio: `productos-stock` (B1),
+  `notificaciones-pedidos` / `envios-pedidos` (B2), `pagos-pedidos` (B3).
+- B1 y B2 configuran `KAFKA_BOOTSTRAP_SERVERS=10.0.1.13:29092`
+  (SG de backend-3 debe permitir 29092 desde los SG de B1 y B2).
+- Local: `docker compose up` en backend-3 y no setear la variable
+  (default `localhost:29092`).

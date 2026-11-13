@@ -1,5 +1,9 @@
 # Frontend con Docker
 
+> IMPORTANTE: `nginx.conf` es una configuración COMPLETA (bloques
+> `events{}`/`http{}`). El Dockerfile la copia a `/etc/nginx/nginx.conf`
+> (no a `conf.d/default.conf`, ahí el contenedor muere al arrancar).
+
 Construir la imagen pasando la configuracion de Vite como argumentos:
 
 ```bash

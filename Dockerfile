@@ -29,7 +29,11 @@ RUN npm run build
 
 FROM nginx:1.27-alpine
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# nginx.conf es una configuración COMPLETA (bloques events/http):
+# debe reemplazar el nginx.conf principal, NO un archivo de conf.d
+# (conf.d se incluye dentro del bloque http y ahí no pueden existir
+# events/http: el contenedor moriría al arrancar).
+COPY nginx.conf /etc/nginx/nginx.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
