@@ -254,6 +254,27 @@ export const AuthDrawer = ({ isOpen, onClose, onAuthenticated, user }) => {
                     ? "Ingresar"
                     : "Crear cuenta"}
               </button>
+              <div className="flex items-center gap-3">
+                <span className="h-px flex-1 bg-slate-800" />
+                <span className="text-xs uppercase tracking-widest text-slate-600">
+                  o
+                </span>
+                <span className="h-px flex-1 bg-slate-800" />
+              </div>
+              <button
+                type="button"
+                onClick={enviarAzure}
+                disabled={submitting}
+                className="btn-secondary w-full disabled:cursor-wait disabled:opacity-60"
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M3 3h8.5v8.5H3V3zm9.5 0H21v8.5h-8.5V3zM3 12.5h8.5V21H3v-8.5zm9.5 0H21V21h-8.5v-8.5z"
+                  />
+                </svg>
+                Ingresar con Microsoft
+              </button>
             </form>
 
             <p className="mt-5 text-center text-sm text-slate-500">
