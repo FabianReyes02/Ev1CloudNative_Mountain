@@ -11,6 +11,27 @@ import {
 // debe caer al default relativo /api, por eso || y no ??.
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
 
+// Un API Gateway por backend (las rutas del gateway coinciden con el
+// context-path del servicio): B1 productos/usuarios/pedidos, B2 carrito/
+// notificaciones/envíos, B3 pagos/recomendaciones. Sin build-args todo cae
+// al mismo origen /api (nginx local y desarrollo).
+const BASE_B1 = (import.meta.env.VITE_API_B1_URL || '').replace(/\/+$/, '');
+const BASE_B2 = (import.meta.env.VITE_API_B2_URL || '').replace(/\/+$/, '');
+const BASE_B3 = (import.meta.env.VITE_API_B3_URL || '').replace(/\/+$/, '');
+
+const RUTAS_BACKEND = [
+  [BASE_B1, ['/auth', '/users', '/products', '/orders']],
+  [BASE_B2, ['/cart', '/notifications', '/shipments']],
+  [BASE_B3, ['/payments', '/recommendations']],
+];
+
+const basePara = (path) => {
+  for (const [base, prefijos] of RUTAS_BACKEND) {
+    if (base && prefijos.some((p) => path === p || path.startsWith(`${p}/`))) return base;
+  }
+  return API_BASE_URL;
+};
+
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 
 const AUTH_STORAGE_KEY = 'summitlab.auth.v1';
@@ -111,7 +132,7 @@ const azureRefresh = async () => {
 };
 
 const doRequest = async (path, { method = 'GET', body, headers, token } = {}) => {
-  return fetch(`${API_BASE_URL}${path}`, {
+  return fetch(`${basePara(path)}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
