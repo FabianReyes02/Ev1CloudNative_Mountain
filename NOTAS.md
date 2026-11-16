@@ -121,6 +121,7 @@ Hoy todo funciona con datos simulados. La integración real está preparada en
 
 ## 7. Errores conocidos / mejoras pendientes
 
+- Pendiente para Evaluación 3: integrar **pagos** (`/api/payments`, WebPay simulado/real, detección de fraude) y **recomendaciones** (`/api/recommendations`) con el backend-3; ajustar `nginx.conf`/proxy a backend-3; completar E2E local con Docker Compose y luego en AWS.
 - El botón de **buscar** del navbar es placeholder (muestra un toast).
 - El **login** es placeholder hasta integrar MSAL.
 - No hay página de detalle de producto ni vista 404 (rutas con anclas únicamente).
