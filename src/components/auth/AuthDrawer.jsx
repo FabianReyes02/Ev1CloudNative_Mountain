@@ -267,11 +267,11 @@ export const AuthDrawer = ({ isOpen, onClose, onAuthenticated, user }) => {
                 disabled={submitting}
                 className="btn-secondary w-full disabled:cursor-wait disabled:opacity-60"
               >
-                <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-                  <path
-                    fill="currentColor"
-                    d="M3 3h8.5v8.5H3V3zm9.5 0H21v8.5h-8.5V3zM3 12.5h8.5V21H3v-8.5zm9.5 0H21V21h-8.5v-8.5z"
-                  />
+                <svg viewBox="0 0 23 23" className="h-4 w-4" aria-hidden="true">
+                  <rect x="1" y="1" width="10" height="10" fill="#f25022" />
+                  <rect x="12" y="1" width="10" height="10" fill="#7fba00" />
+                  <rect x="1" y="12" width="10" height="10" fill="#00a4ef" />
+                  <rect x="12" y="12" width="10" height="10" fill="#ffb900" />
                 </svg>
                 Ingresar con Microsoft
               </button>
