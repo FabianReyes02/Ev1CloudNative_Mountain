@@ -9,14 +9,6 @@ import {
 } from "lucide-react";
 import { authService } from "../../services/api";
 
-// Azure solo si el build definió las 3 variables; si no, se ofrece el
-// login local (email/password) del servicio-usuarios (modo demo del lab).
-const AZURE_CONFIGURADO = Boolean(
-  import.meta.env.VITE_AZURE_CLIENT_ID &&
-    import.meta.env.VITE_AZURE_TENANT_ID &&
-    import.meta.env.VITE_AZURE_API_SCOPE,
-);
-
 export const AuthDrawer = ({ isOpen, onClose, onAuthenticated, user }) => {
   const [modo, setModo] = useState("login"); // 'login' | 'registro'
   const [campos, setCampos] = useState({ email: "", password: "", name: "" });
@@ -134,41 +126,6 @@ export const AuthDrawer = ({ isOpen, onClose, onAuthenticated, user }) => {
             >
               <LogOut className="h-4 w-4" /> Cerrar sesión
             </button>
-          </div>
-        ) : AZURE_CONFIGURADO ? (
-          <div className="flex flex-1 flex-col">
-            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-glacier-400">
-              Acceso seguro con Azure
-            </p>
-            <h2 className="font-display text-3xl font-bold text-white">
-              Vuelve a la cumbre
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-400">
-              Ingresa con tu cuenta de Microsoft para continuar con tu equipo de
-              montaña.
-            </p>
-
-            <form onSubmit={enviarAzure} className="mt-7 space-y-4">
-              {status.message && (
-                <p
-                  role="alert"
-                  className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300"
-                >
-                  {status.message}
-                </p>
-              )}
-              <button
-                disabled={submitting}
-                className="btn-primary w-full disabled:cursor-wait disabled:opacity-60"
-              >
-                {submitting ? (
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ArrowRight className="h-4 w-4" />
-                )}
-                {submitting ? "Procesando..." : "Ingresar con Microsoft"}
-              </button>
-            </form>
           </div>
         ) : (
           <div className="flex flex-1 flex-col">
