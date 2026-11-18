@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowRight,
   Check,
@@ -12,7 +12,7 @@ import {
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../ui/Toast';
-import { authService, cartService } from '../../services/api';
+import { authService, cartService, paymentService } from '../../services/api';
 import { handleImageError } from '../../lib/placeholderImage';
 
 const currency = new Intl.NumberFormat('es-CL', {
@@ -20,6 +20,21 @@ const currency = new Intl.NumberFormat('es-CL', {
   currency: 'CLP',
   minimumFractionDigits: 0,
 });
+
+// WebPay Plus (Transbank): el "url" devuelto por POST /payments exige un
+// POST de formulario con token_ws; un simple redirect no funciona.
+const redirigirWebPay = (url, token) => {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = url;
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = 'token_ws';
+  input.value = token;
+  form.appendChild(input);
+  document.body.appendChild(form);
+  form.submit();
+};
 
 export const CartDrawer = () => {
   const {
@@ -35,6 +50,30 @@ export const CartDrawer = () => {
   const { isAuthenticated, tokenStatus } = useAuth();
   const [placing, setPlacing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  // Retorno de WebPay (Transbank -> backend -> ?payment=success|failed|cancelled).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pago = params.get('payment');
+    if (!pago) return undefined;
+    const orderId = params.get('orderId');
+    if (pago === 'success') {
+      toast(
+        `Pago WebPay aprobado${orderId ? ` (pedido ${orderId})` : ''}. ¡Gracias por tu compra!`,
+        { type: 'success' },
+      );
+    } else if (pago === 'cancelled') {
+      toast('Pago cancelado. Tu pedido quedó registrado sin pagar.', {
+        type: 'error',
+      });
+    } else {
+      toast('El pago WebPay fue rechazado o falló. Intenta nuevamente.', {
+        type: 'error',
+      });
+    }
+    window.history.replaceState({}, '', window.location.pathname);
+    return undefined;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Solo Microsoft: sin sesión se redirige al login de Azure.
   const goMicrosoftLogin = () => {
@@ -61,8 +100,49 @@ export const CartDrawer = () => {
         })),
         subtotal: totals.subtotal,
       });
-      toast(`Compra realizada con éxito. Pedido ${order.id}`);
+
+      let mensaje = `Compra realizada con éxito. Pedido ${order.id}`;
+      let tipo = 'success';
+      let aWebPay = null;
+      try {
+        const pago = await paymentService.create({
+          orderId: order.id,
+          amount: order.totals?.subtotal ?? totals.subtotal,
+          paymentMethod: 'WEBPAY',
+        });
+        if (
+          pago.status === 'PENDIENTE' &&
+          !pago.simulated &&
+          pago.webpayUrl &&
+          pago.webpayToken
+        ) {
+          aWebPay = { url: pago.webpayUrl, token: pago.webpayToken };
+        } else if (pago.status === 'PENDIENTE' && pago.simulated) {
+          const confirmado = await paymentService.confirm(pago.id);
+          mensaje =
+            confirmado.status === 'APROBADO'
+              ? `Compra y pago simulado aprobados. Pedido ${order.id}`
+              : `Pedido ${order.id} creado, pero el pago simulado no se pudo confirmar.`;
+        } else if (pago.status === 'RECHAZADO') {
+          tipo = 'error';
+          mensaje = `Pedido ${order.id} creado, pero el pago fue rechazado por detección de fraude (score ${pago.fraudScore ?? '—'}).`;
+        } else if (pago.status === 'REVISION') {
+          tipo = 'info';
+          mensaje = `Pedido ${order.id} creado. El pago quedó en revisión por riesgo medio (score ${pago.fraudScore ?? '—'}).`;
+        }
+      } catch {
+        // El pedido ya existe; si el pago falla el usuario puede reintentarlo.
+        tipo = 'info';
+        mensaje = `Pedido ${order.id} creado, pero no se pudo iniciar el pago.`;
+      }
+
+      toast(mensaje, { type: tipo });
       clearCart();
+      if (aWebPay) {
+        closeCart();
+        redirigirWebPay(aWebPay.url, aWebPay.token);
+        return;
+      }
       closeCart();
     } catch (error) {
       if (error.message === 'api_UNAUTHORIZED') {

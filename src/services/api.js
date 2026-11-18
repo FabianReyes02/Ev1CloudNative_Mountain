@@ -324,6 +324,31 @@ export const cartService = {
 };
 
 /**
+ * Pagos (MS pagos, backend-3). Crea el pago con detección de fraude e inicia
+ * WebPay (real con Transbank o simulado según la configuración del backend).
+ */
+export const paymentService = {
+  create: async (payload) => {
+    if (USE_MOCK) {
+      await delay(420);
+      return {
+        id: `PAGO-${String(Date.now()).slice(-6)}`,
+        status: 'APROBADO',
+        simulated: true,
+      };
+    }
+    return request('/payments', { method: 'POST', body: payload });
+  },
+  confirm: async (id) => {
+    if (USE_MOCK) {
+      await delay(320);
+      return { id, status: 'APROBADO', simulated: true };
+    }
+    return request(`/payments/${id}/confirm`, { method: 'POST' });
+  },
+};
+
+/**
  * Carrito persistente (MS carrito, backend-2). Solo con sesión: el email
  * dueño sale del JWT. En modo mock no se usa (carrito 100% local).
  */
